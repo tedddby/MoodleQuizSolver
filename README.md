@@ -32,7 +32,7 @@ project/
 
 ```bash
 git clone https://github.com/tedddby/MoodleQuizSolver.git
-cd moodle-quiz-solver
+cd MoodleQuizSolver
 ```
 
 ### 2. Install dependencies
