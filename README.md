@@ -50,7 +50,7 @@ GEMINI_API=your_gemini_api_key
 ```
 
 ### 4. Set your credentials and quiz id
-
+Set your credentials and quiz id in `app.js`
 ```app.js
 MOODLE_USERNAME=your_moodle_username
 MOODLE_PASSWORD=your_moodle_password
