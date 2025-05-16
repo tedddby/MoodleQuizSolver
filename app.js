@@ -7,17 +7,13 @@ require('dotenv').config();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const MOODLE_USERNAME = '';
-const MOODLE_PASSWORD = '';
-const QUIZ_ID = '';
+const MOODLE_USERNAME = 'student';
+const MOODLE_PASSWORD = 'moodle25';
+const QUIZ_ID = '81871';
 
 const getAnswerFromGemini = async (questionText, options) => {
-    const optionsText = options.map((opt, index) => {
-        const letter = String.fromCharCode(65 + index);
-        return `${letter}. ${opt}`;
-    }).join('\n');
-
-    const prompt = `Question: ${questionText}\n\nOptions:\n${optionsText}\n\nPlease provide the correct answer by stating the letter only (e.g., "A").`;
+    const optionsText = options.join('\n\n');
+    const prompt = `Question: ${questionText}\n\nOptions:\n${optionsText}\n\nPlease provide the correct answer by stating the full exact answer text (only one answer can be correct) (e.g., "this is the correct answer").`;
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API}`, {
         method: 'POST',
@@ -42,16 +38,17 @@ const getAnswerFromGemini = async (questionText, options) => {
         throw new Error('No answer returned from Gemini');
     }
 
-    return answer.trim().toUpperCase();
+    //console.log(answer);
+
+    return answer.trim();
 };
 
 
 const startSolving = async () => {
     const browser = await puppeteer.launch({ headless: false });
     const page = await browser.newPage();
-    console.log(1);
 
-    await page.goto('https://el.sustech.edu/login/index.php');
+    await page.goto('https://school.moodledemo.net/login/index.php'); //https://el.sustech.edu/login/index.php
     await page.type('#username', MOODLE_USERNAME);
     await page.type('#password', MOODLE_PASSWORD);
     await Promise.all([
@@ -59,35 +56,31 @@ const startSolving = async () => {
         page.waitForNavigation()
     ]);
 
-    await page.goto('https://el.sustech.edu/mod/quiz/view.php?id='+QUIZ_ID);
+    await page.goto('https://school.moodledemo.net/mod/quiz/view.php?id=1655'); //'https://el.sustech.edu/mod/quiz/view.php?id='+QUIZ_ID
 
-    console.log('⏳ Waiting 2 minutes for password input...');
+    console.log('⏳ Waiting for password input...');
     await page.waitForNavigation();
-    await new Promise(resolve => setTimeout(resolve, 4 * 60 * 1000));
     console.log('Starting quiz solving...');
 
-    const questions = await page.$$('.que');
-    for (const question of questions) {
-        const qText = await question.$eval('.qtext', el => el.innerText.trim());
-
-        const optionLabels = await question.$$('label');
-        const optionTexts = [];
-
-        for (const label of optionLabels) {
-            const text = await label.evaluate(el => el.innerText.trim());
-            optionTexts.push(text);
+    let nextPage = await page.$('input[type="submit"][value*="Next page"]');
+    if(nextPage){
+        while (nextPage !== null) {
+            let questions = await page.$$('.que');
+            if(questions.length > 1){
+                for (const question of questions) {
+                    await solveQuestion(question);
+                }
+            }else{
+                await solveQuestion(questions);
+            }
+            await nextPage.click();
+            await page.waitForNavigation();
+            nextPage = await page.$('input[type="submit"][value*="Next page"]');
         }
-
-        const answerLetter = await getAnswerFromGemini(qText, optionTexts);
-        const selectedIndex = answerLetter.charCodeAt(0) - 65;
-
-        if (optionLabels[selectedIndex]) {
-            const forAttr = await optionLabels[selectedIndex].evaluate(el => el.getAttribute('for'));
-            const input = await question.$(`#${forAttr}`);
-            if (input) await input.click();
-            console.log(`[✅] Answered: ${qText} → ${answerLetter}`);
-        } else {
-            console.warn(`[⚠️] Gemini returned invalid answer: "${answerLetter}"`);
+    }else{
+        let questions = await page.$$('.que');
+        for (const question of questions) {
+            await solveQuestion(question);
         }
     }
 
@@ -97,6 +90,26 @@ const startSolving = async () => {
     }
 
     //await browser.close();
+}
+
+const solveQuestion = async (question) => {
+    const qText = await question.$eval('.qtext', el => el.innerText.trim());
+    const options = await question.$$eval('.answer [data-region="answer-label"] p', elements =>
+        elements.map(el => el.innerText.trim())
+    );
+
+    const correctAnswer = await getAnswerFromGemini(qText, options);
+
+    await question.$$eval('.answer div[data-region="answer-label"]', (labels, text) => {
+        for (const label of labels) {
+            const p = label.querySelector('p');
+            if (p && p.innerText.trim() === text.trim()) {
+                const input = label.closest('.r0, .r1')?.querySelector('input[type="radio"]');
+                if (input) input.click();
+                break;
+            }
+        }
+    }, correctAnswer);
 }
 
 app.get('/start', async (req, res) => {
