@@ -59,22 +59,13 @@ QUIZ_ID=quiz_id
 Start the server:
 
 ```bash
-node app.js
+start app.js (Don't use "node" because this project uses nodemon and uses "start" command for starting the app)
 ```
 
-Then trigger the solving process by sending a request to your endpoint (e.g., `/start` or similar depending on the defined routes in `app.js`).
+Then trigger the solving process by sending a request to your endpoint (e.g., `/start-app`).
 
----
+> ⚠️ Make sure you’ve set the correct quiz ID and login credentials in your `app.js` and a valid Gemini api key in your `.env`.
 
-## 📦 API Overview
-
-If your `app.js` exposes an endpoint like `/start`, you can trigger the solving using:
-
-```bash
-curl -X GET http://localhost:4433/start
-```
-
-> ⚠️ Make sure you’ve set the correct quiz ID and login credentials in your `.env`.
 
 ---
 
@@ -90,7 +81,7 @@ curl -X GET http://localhost:4433/start
 
 ## 🛡️ Security Considerations
 
-- Store your API keys and credentials only in `.env`.
+- Store your API key only in `.env`.
 - Do not commit `.env` or any sensitive data to version control.
 
 ---
