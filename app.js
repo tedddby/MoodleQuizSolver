@@ -9,7 +9,7 @@ app.use(express.urlencoded({ extended: true }));
 
 const MOODLE_USERNAME = 'student';
 const MOODLE_PASSWORD = 'moodle25';
-const QUIZ_ID = '81871';
+const QUIZ_ID = '1655';
 
 const getAnswerFromGemini = async (questionText, options) => {
     const optionsText = options.join('\n\n');
@@ -56,7 +56,7 @@ const startSolving = async () => {
         page.waitForNavigation()
     ]);
 
-    await page.goto('https://school.moodledemo.net/mod/quiz/view.php?id=1655'); //'https://el.sustech.edu/mod/quiz/view.php?id='+QUIZ_ID
+    await page.goto('https://school.moodledemo.net/mod/quiz/view.php?id='+QUIZ_ID); //'https://el.sustech.edu/mod/quiz/view.php?id='+QUIZ_ID
 
     console.log('⏳ Waiting for password input...');
     await page.waitForNavigation();
