@@ -49,7 +49,7 @@ Create a `.env` file in the root directory with the following variables:
 GEMINI_API=your_gemini_api_key
 MOODLE_USERNAME=your_moodle_username
 MOODLE_PASSWORD=your_moodle_password
-QUIZ_ID=quiz_id_if_required
+QUIZ_ID=quiz_id
 ```
 
 ---
