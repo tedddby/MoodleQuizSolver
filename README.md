@@ -31,7 +31,7 @@ project/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/moodle-quiz-solver.git
+git clone https://github.com/tedddby/moodle-quiz-solver.git
 cd moodle-quiz-solver
 ```
 
