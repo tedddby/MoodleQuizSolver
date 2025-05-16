@@ -64,7 +64,7 @@ QUIZ_ID=quiz_id
 Start the server:
 
 ```bash
-start app.js (Dont use "node" because this project uses nodemon and uses "start" command for starting the app)
+npm start (configured nodemon command)
 ```
 
 Then trigger the solving process by sending a request to your endpoint (e.g., `/start`).
