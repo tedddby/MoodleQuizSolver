@@ -67,7 +67,7 @@ Start the server:
 start app.js (Dont use "node" because this project uses nodemon and uses "start" command for starting the app)
 ```
 
-Then trigger the solving process by sending a request to your endpoint (e.g., `/start-app`).
+Then trigger the solving process by sending a request to your endpoint (e.g., `/start`).
 
 > ⚠️ Make sure you’ve set the correct quiz ID and login credentials in your `app.js` and a valid Gemini api key in your `.env`.
 
