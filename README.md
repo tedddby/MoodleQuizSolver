@@ -31,7 +31,7 @@ project/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/tedddby/moodle-quiz-solver.git
+git clone https://github.com/tedddby/MoodleQuizSolver.git
 cd moodle-quiz-solver
 ```
 
@@ -71,7 +71,7 @@ Then trigger the solving process by sending a request to your endpoint (e.g., `/
 If your `app.js` exposes an endpoint like `/start`, you can trigger the solving using:
 
 ```bash
-curl -X GET http://localhost:3000/start
+curl -X GET http://localhost:4433/start
 ```
 
 > ⚠️ Make sure you’ve set the correct quiz ID and login credentials in your `.env`.
