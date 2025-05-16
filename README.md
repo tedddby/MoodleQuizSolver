@@ -47,6 +47,11 @@ Create a `.env` file in the root directory with the following variables:
 
 ```env
 GEMINI_API=your_gemini_api_key
+```
+
+### 4. Set your credentials and quiz id
+
+```app.js
 MOODLE_USERNAME=your_moodle_username
 MOODLE_PASSWORD=your_moodle_password
 QUIZ_ID=quiz_id
@@ -59,7 +64,7 @@ QUIZ_ID=quiz_id
 Start the server:
 
 ```bash
-start app.js (Don't use "node" because this project uses nodemon and uses "start" command for starting the app)
+start app.js (Dont use "node" because this project uses nodemon and uses "start" command for starting the app)
 ```
 
 Then trigger the solving process by sending a request to your endpoint (e.g., `/start-app`).
