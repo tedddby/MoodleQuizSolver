@@ -7,13 +7,13 @@ require('dotenv').config();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const MOODLE_USERNAME = 'student';
-const MOODLE_PASSWORD = 'moodle25';
-const QUIZ_ID = '1655';
+const MOODLE_USERNAME = '';
+const MOODLE_PASSWORD = '';
+const QUIZ_ID = '';
 
 const getAnswerFromGemini = async (questionText, options) => {
     const optionsText = options.join('\n\n');
-    const prompt = `Question: ${questionText}\n\nOptions:\n${optionsText}\n\nPlease provide the correct answer by stating the full exact answer text (only one answer can be correct) (e.g., "this is the correct answer").`;
+    const prompt = `Question: ${questionText}\n\nOptions:\n${optionsText}\n\nPlease provide the correct answer by stating the full exact answer text (e.g., "a. this is the correct answer").`;
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API}`, {
         method: 'POST',
@@ -28,6 +28,7 @@ const getAnswerFromGemini = async (questionText, options) => {
     });
 
     if (!response.ok) {
+        console.log("gemini err");
         throw new Error(`Gemini API error: ${response.statusText}`);
     }
 
@@ -38,8 +39,6 @@ const getAnswerFromGemini = async (questionText, options) => {
         throw new Error('No answer returned from Gemini');
     }
 
-    //console.log(answer);
-
     return answer.trim();
 };
 
@@ -48,7 +47,7 @@ const startSolving = async () => {
     const browser = await puppeteer.launch({ headless: false });
     const page = await browser.newPage();
 
-    await page.goto('https://school.moodledemo.net/login/index.php'); //https://el.sustech.edu/login/index.php
+    await page.goto('https://el.sustech.edu/login/index.php');
     await page.type('#username', MOODLE_USERNAME);
     await page.type('#password', MOODLE_PASSWORD);
     await Promise.all([
@@ -56,7 +55,7 @@ const startSolving = async () => {
         page.waitForNavigation()
     ]);
 
-    await page.goto('https://school.moodledemo.net/mod/quiz/view.php?id='+QUIZ_ID); //'https://el.sustech.edu/mod/quiz/view.php?id='+QUIZ_ID
+    await page.goto('https://el.sustech.edu/mod/quiz/view.php?id='+QUIZ_ID);
 
     console.log('⏳ Waiting for password input...');
     await page.waitForNavigation();
@@ -65,51 +64,55 @@ const startSolving = async () => {
     let nextPage = await page.$('input[type="submit"][value*="Next page"]');
     if(nextPage){
         while (nextPage !== null) {
-            let questions = await page.$$('.que');
-            if(questions.length > 1){
-                for (const question of questions) {
-                    await solveQuestion(question);
-                }
-            }else{
-                await solveQuestion(questions);
-            }
+            await solveQuestion(page);
             await nextPage.click();
             await page.waitForNavigation();
             nextPage = await page.$('input[type="submit"][value*="Next page"]');
         }
+        await solveQuestion(page);
     }else{
-        let questions = await page.$$('.que');
-        for (const question of questions) {
-            await solveQuestion(question);
-        }
+        await solveQuestion(page);
     }
 
     const finishBtn = await page.$('input[type="submit"][value*="Finish"]');
+
     if (finishBtn) {
         console.log("[✅][✅] All questions have been answered, now go check them manually and submit your attempt");
     }
-
-    //await browser.close();
 }
 
-const solveQuestion = async (question) => {
-    const qText = await question.$eval('.qtext', el => el.innerText.trim());
-    const options = await question.$$eval('.answer [data-region="answer-label"] p', elements =>
-        elements.map(el => el.innerText.trim())
-    );
+const solveQuestion = async (page) => {
+    try{
+        const qText = await page.$eval('.qtext', el => el.innerText.trim());
+        const options = await page.$$eval('.que.multichoice .answer div[data-region="answer-label"]', els =>
+            els.map(el => el.textContent.trim())
+        );
 
-    const correctAnswer = await getAnswerFromGemini(qText, options);
+        const correctAnswer = await getAnswerFromGemini(qText, options);
 
-    await question.$$eval('.answer div[data-region="answer-label"]', (labels, text) => {
-        for (const label of labels) {
-            const p = label.querySelector('p');
-            if (p && p.innerText.trim() === text.trim()) {
-                const input = label.closest('.r0, .r1')?.querySelector('input[type="radio"]');
-                if (input) input.click();
-                break;
+        await page.$$eval('.answer div[data-region="answer-label"]', (labels, correctAnswerText) => {
+            for (const label of labels) {
+                const text = label.textContent.trim().replace(/\s+/g, ' ');
+                if (text.toLowerCase() === correctAnswerText.trim().toLowerCase()) {
+                    const container = label.closest('.r0, .r1');
+                    if (container) {
+                        const input = container.querySelector('input[type="radio"]');
+                        if (input) {
+                            input.click();
+                            break;
+                        }
+                    }
+                }
             }
-        }
-    }, correctAnswer);
+        }, correctAnswer);
+
+
+        console.log(`[✅] Question: ${qText} --> Answer: ${correctAnswer}`);
+    }catch (e){
+        console.log(e)
+        let url = await page.url();
+        console.log(`[⚠️] Question flagged -> ${url}`);
+    }
 }
 
 app.get('/start', async (req, res) => {
