@@ -69,7 +69,6 @@ const startSolving = async () => {
             await page.waitForNavigation();
             nextPage = await page.$('input[type="submit"][value*="Next page"]');
         }
-        await solveQuestion(page);
     }else{
         await solveQuestion(page);
     }
