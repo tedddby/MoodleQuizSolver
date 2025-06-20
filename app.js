@@ -55,7 +55,7 @@ const startSolving = async () => {
         page.waitForNavigation()
     ]);
 
-    await page.goto('https://el.sustech.edu/mod/quiz/view.php?id=83365');
+    await page.goto('https://el.sustech.edu/mod/quiz/view.php?id='+QUIZ_ID);
 
     console.log('⏳ Waiting for password input...');
     await page.waitForNavigation();
