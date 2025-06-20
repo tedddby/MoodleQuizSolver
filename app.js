@@ -7,9 +7,9 @@ require('dotenv').config();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const MOODLE_USERNAME = '202122000868';
-const MOODLE_PASSWORD = '202122000868';
-const QUIZ_ID = '83365';
+const MOODLE_USERNAME = '';
+const MOODLE_PASSWORD = '';
+const QUIZ_ID = '';
 
 const getAnswerFromGemini = async (questionText, options) => {
     const optionsText = options.join('\n\n');
