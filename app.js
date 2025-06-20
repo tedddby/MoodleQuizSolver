@@ -7,9 +7,9 @@ require('dotenv').config();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const MOODLE_USERNAME = '';
-const MOODLE_PASSWORD = '';
-const QUIZ_ID = '';
+const MOODLE_USERNAME = '202122000868';
+const MOODLE_PASSWORD = '202122000868';
+const QUIZ_ID = '83365';
 
 const getAnswerFromGemini = async (questionText, options) => {
     const optionsText = options.join('\n\n');
@@ -55,23 +55,57 @@ const startSolving = async () => {
         page.waitForNavigation()
     ]);
 
-    await page.goto('https://el.sustech.edu/mod/quiz/view.php?id='+QUIZ_ID);
+    await page.goto('https://el.sustech.edu/mod/quiz/view.php?id=83365');
 
     console.log('⏳ Waiting for password input...');
     await page.waitForNavigation();
     console.log('Starting quiz solving...');
 
-    let nextPage = await page.$('input[type="submit"][value*="Next page"]');
+    /*let nextPage = await page.$('input[type="submit"][value*="Next page"]');
+
     if(nextPage){
         while (nextPage !== null) {
+
+
             await solveQuestion(page);
-            await nextPage.click();
-            await page.waitForNavigation();
+
+            await Promise.all([
+                nextPage.click(),
+                page.waitForNavigation({ waitUntil: 'networkidle0' })
+            ]);
             nextPage = await page.$('input[type="submit"][value*="Next page"]');
         }
+        await solveQuestion(page);
     }else{
         await solveQuestion(page);
+    }*/
+
+    let nextPage = await page.$('input[type="submit"][value*="Next page"]');
+    let questionCount = 0;
+
+    if (nextPage) {
+        while (nextPage !== null) {
+            await solveQuestion(page);
+            questionCount++;
+
+            if (questionCount % 5 === 0) {
+                console.log('Pausing for 1 minute to avoid hitting the API rate limit...');
+                await new Promise(resolve => setTimeout(resolve, 60000));
+            }
+
+            await Promise.all([
+                nextPage.click(),
+                page.waitForNavigation({ waitUntil: 'networkidle0' })
+            ]);
+
+            nextPage = await page.$('input[type="submit"][value*="Next page"]');
+        }
+
+        await solveQuestion(page);
+    } else {
+        await solveQuestion(page);
     }
+
 
     const finishBtn = await page.$('input[type="submit"][value*="Finish"]');
 
@@ -105,8 +139,10 @@ const solveQuestion = async (page) => {
             }
         }, correctAnswer);
 
-
+        console.log("-------------------------------");
+        console.log(options);
         console.log(`[✅] Question: ${qText} --> Answer: ${correctAnswer}`);
+        console.log("-------------------------------");
     }catch (e){
         console.log(e)
         let url = await page.url();
